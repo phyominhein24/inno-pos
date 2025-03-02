@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,16 +11,37 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import Constants from "expo-constants";
+import { useDispatch, useSelector } from "react-redux";
+import { invoiceService } from "../invoiceService";
 
 const InvoiceListScreen = ({ navigation }) => {
+
+  const dispatch = useDispatch();
+  const [ isLoading, setIsLoading ] = useState(false)
+  const { invoices, paginateParams } = useSelector((state) => state.invoice);
   const [search, setSearch] = useState("");
-  const [invoices] = useState(
-    Array(5).fill({
-      id: "9340438434934",
-      date: "01/03/2025 12:00:30 PM",
-      amount: 138500.0,
-    })
-  );
+  // const [invoices] = useState(
+  //   Array(5).fill({
+  //     id: "9340438434934",
+  //     date: "01/03/2025 12:00:30 PM",
+  //     amount: 138500.0,
+  //   })
+  // );
+
+  const loadingData = useCallback(async () => {
+    try {
+      await invoiceService.index(dispatch, paginateParams);
+      setIsLoading(false);
+    } catch (error) {
+      alert("An error occurred while fetching data.");
+      setIsLoading(false);
+    }
+  }, [dispatch, paginateParams]);
+
+  useEffect(() => {
+      setIsLoading(true);
+      loadingData();
+  }, [loadingData]);
 
   return (
     <View style={styles.container}>
@@ -55,11 +76,10 @@ const InvoiceListScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.invoiceItem}>
               <Ionicons name="document-text" size={24} color="#000" />
               <View style={styles.invoiceDetails}>
-                <Text style={styles.invoiceId}>{item.id}</Text>
-                <Text style={styles.invoiceDate}>{item.date}</Text>
+                <Text style={styles.invoiceId}>{item.iv_number}</Text>
+                <Text style={styles.invoiceDate}>{item.created_at}</Text>
               </View>
-              <Text style={styles.invoiceAmount}>
-                +{item.amount.toLocaleString()}.00
+              <Text style={styles.total_amount}>.00
               </Text>
             </TouchableOpacity>
           </View>
