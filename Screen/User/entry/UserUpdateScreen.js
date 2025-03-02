@@ -1,33 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, StyleSheet, Platform } from "react-native";
 import { useDispatch, useSelector } from 'react-redux';
 import { userService } from '../userService'; 
 import { userPayload } from '../userPayload';  
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 
 const UserUpdateScreen = ({ navigation, route }) => {
   const { data } = route.params;
   const { user } = useSelector(state => state.user);
-  const [payload, setPayload] = useState(userPayload.update);
   const dispatch = useDispatch();
+
+  // Initialize payload with existing user data
+  const [payload, setPayload] = useState({
+    name: data?.name || '',
+    email: data?.email || '',
+    phone: data?.phone || '',
+    profile: data?.profile || '',
+  });
+
+  useEffect(() => {
+    if (user) {
+      setPayload(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        profile: user.profile || '',
+      }));
+    }
+  }, [user]);
+
+  const handleChange = (key, value) => {
+    setPayload(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   const submitUser = async () => {
     try {
       const response = await userService.update(dispatch, data?.id, payload);
-      if(response.status === 200){
+      console.log("Response:", response);
+  
+      if (response && response.status === 200) {
         navigation.navigate('UserList');
+      } else {
+        console.error("Invalid response:", response);
+        alert(`Error: Invalid response from server`);
       }
     } catch (error) {
       console.error("Submit User Error:", error.message || error);
       alert(`Error: ${error.message || "Something went wrong"}`);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      setPayload({ ...user });
-    }
-  }, [user]);
+  
 
   return (
     <View style={styles.container}>
@@ -36,7 +63,7 @@ const UserUpdateScreen = ({ navigation, route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Aung Zaw Phyo</Text>
+        <Text style={styles.headerTitle}>{payload.name || 'User Details'}</Text>
         <TouchableOpacity>
           <Ionicons name="person-circle" size={24} color="gray" />
         </TouchableOpacity>
@@ -45,12 +72,40 @@ const UserUpdateScreen = ({ navigation, route }) => {
       <ScrollView>
         {/* Profile Section */}
         <View style={styles.profileCard}>
-          <Image source={{ uri: payload.profile || 'https://via.placeholder.com/100' }} style={styles.profileImage} />
-          <Text style={styles.email}>{payload.email}</Text>
-          <Text style={styles.phone}>{payload.phone}</Text>
+          {/* <Image source={{ uri: payload.profile || 'https://via.placeholder.com/100' }} style={styles.profileImage} /> */}
+          
+          {/* Editable Fields */}
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Name"
+            value={payload.name}
+            onChangeText={(text) => handleChange('name', text)}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Email"
+            value={payload.email}
+            keyboardType="email-address"
+            onChangeText={(text) => handleChange('email', text)}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Phone"
+            value={payload.phone}
+            keyboardType="phone-pad"
+            onChangeText={(text) => handleChange('phone', text)}
+          />
+
           <Text style={styles.balance}>150,000,000 Ks</Text>
           <Text style={styles.balanceLabel}>Total Balance (Ks)</Text>
         </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.button} onPress={submitUser}>
+          <Text style={styles.buttonText}>UPDATE CUSTOMER</Text>
+        </TouchableOpacity>
 
         {/* Invoice List */}
         <Text style={styles.invoiceHeader}>INVOICE LIST</Text>
@@ -73,7 +128,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F4F4',
-    padding: 10,
+    // padding: 10,
+    marginTop: Platform.OS === 'android'? Constants.statusBarHeight : 0,
   },
   header: {
       flexDirection: 'row',
@@ -94,6 +150,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     marginBottom: 20,
+    marginHorizontal: 10
   },
   profileImage: {
     width: 80,
@@ -101,15 +158,12 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginBottom: 10,
   },
-  email: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  phone: {
-    color: '#fff',
-    fontSize: 14,
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 10,
     marginBottom: 10,
+    width: '90%',
   },
   balance: {
     color: '#fff',
@@ -119,6 +173,18 @@ const styles = StyleSheet.create({
   balanceLabel: {
     color: '#fff',
     fontSize: 12,
+  },
+  button: {
+    backgroundColor: '#A87C4F',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginHorizontal: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   invoiceHeader: {
     fontSize: 18,

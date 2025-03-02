@@ -7,12 +7,15 @@ import {
   StyleSheet,
   Platform,
   ToastAndroid,
+  Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { settingService } from "../settingService";
 import { useDispatch, useSelector } from "react-redux";
 import { settingPayload } from "../settingPayload";
+import * as FileSystem from "expo-file-system";
 
 const SeetingUpdateScreen = ({ navigation }) => {
   const [payload, setPayload] = useState(settingPayload.update);
@@ -22,56 +25,69 @@ const SeetingUpdateScreen = ({ navigation }) => {
   const [email, setEmail] = useState();
   const [address, setAddress] = useState();
   const [tax, setTax] = useState();
+  const [imageUri, setImageUri] = useState(null); // State for logo image
   const dispatch = useDispatch();
 
-  console.log("setting", setting);
-  
+  useEffect(() => {
+    if (setting) {
+      setPayload({ ...setting });
+      setShopName(setting.shop_name || "");
+      setPhone(setting.phone || "");
+      setEmail(setting.email || "");
+      setAddress(setting.address || "");
+      setTax(setting.tax || "");
+      setImageUri(setting.logo || null);
+    }
+  }, [setting]);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 4],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
-      const updatedPayload = {
-        ...payload,
-        shop_name,
-        phone,
-        email,
-        address,
-        tax,
-      };
+      const formData = new FormData();
 
-      console.log("updatedPayload",updatedPayload);
-      
-  
-      const response = await settingService.update(dispatch, updatedPayload);
-       console.log("response", response);
-  
+      formData.append("shop_name", shop_name);
+      formData.append("phone", phone);
+      formData.append("email", email);
+      formData.append("address", address);
+      formData.append("tax", tax);
+
+      if (imageUri) {
+        const fileType = imageUri.split(".").pop();
+        const fileInfo = await FileSystem.getInfoAsync(imageUri);
+
+        formData.append("logo", {
+          uri: imageUri,
+          name: `logo.${fileType}`,
+          type: fileInfo.mimeType || `image/${fileType}`,
+        });
+      }
+
+      console.log("Updated Payload:", formData);
+
+      const response = await settingService.update(dispatch, formData);
+
+      console.log("Response:", response);
+
       if (response.status === 200) {
-        setPayload(response.data);
-        setShopName(response.data.shop_name || "");
-        setPhone(response.data.phone || "");
-        setEmail(response.data.email || "");
-        setAddress(response.data.address || "");
-        setTax(response.data.tax || "");
-        ToastAndroid.show("Setting updated successfully", ToastAndroid.SHORT);
+        ToastAndroid.show("Settings updated successfully", ToastAndroid.SHORT);
       }
     } catch (error) {
       console.error("Submit Setting Error:", error.message || error);
       alert(`Error: ${error.message || "Something went wrong"}`);
     }
   };
-  
-
-  useEffect(() => {
-    if (setting) {
-        setPayload({ ...setting });
-        setShopName(setting.shop_name || "");
-        setPhone(setting.phone || "");
-        setEmail(setting.email || "");
-        setAddress(setting.address || "");
-        setTax(setting.tax || "");
-    }
-}, [setting]);
-
-  
 
   return (
     <View style={styles.container}>
@@ -85,6 +101,16 @@ const SeetingUpdateScreen = ({ navigation }) => {
           <Ionicons name="person-circle" size={24} color="gray" />
         </TouchableOpacity>
       </View>
+
+      {/* Logo Upload Section */}
+      <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        ) : (
+          <Ionicons name="image-outline" size={50} color="gray" />
+        )}
+      </TouchableOpacity>
+      <Text style={styles.imageText}>Tap to upload logo</Text>
 
       {/* Input Fields */}
       <TextInput
@@ -135,7 +161,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F4F4F4",
-    // padding: 10,
     marginTop: Platform.OS === "android" ? Constants.statusBarHeight : 0,
   },
   header: {
@@ -150,6 +175,27 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
+  },
+  imageContainer: {
+    alignSelf: "center",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10,
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  imageText: {
+    textAlign: "center",
+    color: "gray",
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,

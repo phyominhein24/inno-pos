@@ -17,5 +17,6 @@ export const endpoints = {
     item: "item",
     image: `${imageURL}`,
     setting: "setting",
-    invoice: "invoice"
+    invoice: "invoice",
+    customer: "customer"
 };
