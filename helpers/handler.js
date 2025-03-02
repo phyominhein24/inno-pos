@@ -40,7 +40,7 @@ export const httpErrorHandler = (error) => {
 
   if (status === 401) {
     removeData(keys.API_TOKEN);
-    Updates.reloadAsync(); 
+    // Updates.reloadAsync(); 
     return {
       status: status,
       error: data.message,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   ToastAndroid,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,29 +17,15 @@ import { settingService } from "../settingService";
 import { useDispatch, useSelector } from "react-redux";
 import { settingPayload } from "../settingPayload";
 import * as FileSystem from "expo-file-system";
+import { payloadHandler } from "../../../helpers/handler";
 
-const SeetingUpdateScreen = ({ navigation }) => {
+const SettingUpdateScreen = ({ navigation }) => {
   const [payload, setPayload] = useState(settingPayload.update);
-  const { setting } = useSelector((state) => state.setting);
-  const [shop_name, setShopName] = useState();
-  const [phone, setPhone] = useState();
-  const [email, setEmail] = useState();
-  const [address, setAddress] = useState();
-  const [tax, setTax] = useState();
-  const [imageUri, setImageUri] = useState(null); // State for logo image
+  const { setting, paginateParams } = useSelector((state) => state.setting);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageUri, setImageUri] = useState(null);
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    if (setting) {
-      setPayload({ ...setting });
-      setShopName(setting.shop_name || "");
-      setPhone(setting.phone || "");
-      setEmail(setting.email || "");
-      setAddress(setting.address || "");
-      setTax(setting.tax || "");
-      setImageUri(setting.logo || null);
-    }
-  }, [setting]);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -53,45 +40,47 @@ const SeetingUpdateScreen = ({ navigation }) => {
     }
   };
 
-  const handleSubmit = async () => {
+  const submitSetting = async () => {
     try {
-      const formData = new FormData();
-
-      formData.append("shop_name", shop_name);
-      formData.append("phone", phone);
-      formData.append("email", email);
-      formData.append("address", address);
-      formData.append("tax", tax);
-
-      if (imageUri) {
-        const fileType = imageUri.split(".").pop();
-        const fileInfo = await FileSystem.getInfoAsync(imageUri);
-
-        formData.append("logo", {
-          uri: imageUri,
-          name: `logo.${fileType}`,
-          type: fileInfo.mimeType || `image/${fileType}`,
-        });
-      }
-
-      console.log("Updated Payload:", formData);
-
-      const response = await settingService.update(dispatch, formData);
-
-      console.log("Response:", response);
-
-      if (response.status === 200) {
-        ToastAndroid.show("Settings updated successfully", ToastAndroid.SHORT);
-      }
+      setIsSubmitting(true);
+      await settingService.update(dispatch, payload);
+      // ToastAndroid.show("Settings updated successfully", ToastAndroid.SHORT);
     } catch (error) {
       console.error("Submit Setting Error:", error.message || error);
       alert(`Error: ${error.message || "Something went wrong"}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const loadingData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await settingService.index(dispatch, paginateParams);
+    } catch (error) {
+      alert("An error occurred while fetching data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch, paginateParams]);
+
+  useEffect(() => {
+    loadingData();
+  }, [loadingData]);
+
+  useEffect(() => {
+    if (setting) {
+      setPayload({ ...setting });
+    }
+  }, [setting]);
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#A87C4F" />
+        </View>
+      )}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
@@ -102,7 +91,6 @@ const SeetingUpdateScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Logo Upload Section */}
       <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.image} />
@@ -112,46 +100,49 @@ const SeetingUpdateScreen = ({ navigation }) => {
       </TouchableOpacity>
       <Text style={styles.imageText}>Tap to upload logo</Text>
 
-      {/* Input Fields */}
       <TextInput
         style={styles.input}
         placeholder="Enter shop name"
-        value={shop_name}
-        onChangeText={setShopName}
+        value={payload?.shop_name}
+        onChangeText={(text) => payloadHandler(payload, text, "shop_name", setPayload)}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Enter Phone number"
         keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
+        value={payload?.phone}
+        onChangeText={(text) => payloadHandler(payload, text, "phone", setPayload)}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Enter email address (Optional)"
         keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        value={payload?.email}
+        onChangeText={(text) => payloadHandler(payload, text, "email", setPayload)}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Enter address"
-        value={address}
-        onChangeText={setAddress}
+        value={payload?.address}
+        onChangeText={(text) => payloadHandler(payload, text, "address", setPayload)}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Enter tax"
-        value={tax}
-        onChangeText={setTax}
+        value={payload?.tax}
+        onChangeText={(text) => payloadHandler(payload, text, "tax", setPayload)}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Update</Text>
+      <TouchableOpacity style={styles.button} onPress={submitSetting} disabled={isSubmitting}>
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Update</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -162,6 +153,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F4F4",
     marginTop: Platform.OS === "android" ? Constants.statusBarHeight : 0,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
   header: {
     flexDirection: "row",
@@ -218,4 +220,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SeetingUpdateScreen;
+export default SettingUpdateScreen;

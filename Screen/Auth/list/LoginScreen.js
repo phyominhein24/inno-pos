@@ -11,6 +11,7 @@ const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const submitLogin = async () => {
+    navigation.navigate('Dashboard');
     setLoading(true);
     try {
       const result = await authService.login(payload, dispatch);
@@ -27,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require('../../../assets/logo.png')} style={styles.logo} />
+        <Image source={require('../../../assets/BeautyMyanmar.png')} style={styles.logo} />
       </View>
 
       <View style={styles.inputContainer}>

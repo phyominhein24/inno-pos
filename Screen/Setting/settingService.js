@@ -23,7 +23,7 @@ export const settingService = {
         await httpServiceHandler(dispatch, response);
 
         if (response.status === 200) {
-            dispatch(index(response.data.data ? response.data.data : response.data));
+            dispatch(update(response.data.data ? response.data.data : response.data));
             dispatch(updateNotification({
                 variant: "success",
                 message: response.message,
