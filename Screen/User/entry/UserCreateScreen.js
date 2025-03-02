@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 
 const UserCreateScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F4F4',
-    padding: 10,
+    marginTop: Platform.OS === "android" ? Constants.statusBarHeight : 0,
   },
   header: {
       flexDirection: 'row',
@@ -89,12 +90,14 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 15,
+    marginHorizontal: 10
   },
   button: {
     backgroundColor: '#A87C4F',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    marginHorizontal: 10
   },
   buttonText: {
     color: '#fff',

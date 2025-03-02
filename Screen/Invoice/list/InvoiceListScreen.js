@@ -6,11 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
+import Constants from "expo-constants";
 
-const InvoiceListScreen = ({navigation}) => {
+const InvoiceListScreen = ({ navigation }) => {
   const [search, setSearch] = useState("");
   const [invoices] = useState(
     Array(5).fill({
@@ -56,7 +58,9 @@ const InvoiceListScreen = ({navigation}) => {
                 <Text style={styles.invoiceId}>{item.id}</Text>
                 <Text style={styles.invoiceDate}>{item.date}</Text>
               </View>
-              <Text style={styles.invoiceAmount}>+{item.amount.toLocaleString()}.00</Text>
+              <Text style={styles.invoiceAmount}>
+                +{item.amount.toLocaleString()}.00
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -68,21 +72,22 @@ const InvoiceListScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F4F4',
-    padding: 10,
+    backgroundColor: "#F4F4F4",
+    // padding: 10,
+    marginTop: Platform.OS === "android" ? Constants.statusBarHeight : 0,
   },
   header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      backgroundColor: '#fff',
-      marginBottom: 10,
-      elevation: 3,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fff",
+    marginBottom: 10,
+    elevation: 3,
   },
   headerTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: "bold",
   },
   searchBar: {
     borderWidth: 1,
@@ -90,12 +95,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginVertical: 10,
+    marginHorizontal: 10,
   },
   invoiceCard: {
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    marginHorizontal: 10,
     elevation: 2,
   },
   sectionTitle: {

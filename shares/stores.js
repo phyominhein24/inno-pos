@@ -4,6 +4,7 @@ import userSlice from "../Screen/User/userSlice";
 import categorySlice from "../Screen/Category/categorySlice";
 import itemSlice from "../Screen/Item/itemSlice";
 import invoiceSlice from "../Screen/Invoice/invoiceSlice";
+import settingSlice from "../Screen/Setting/settingSlice";
 
 export const stores = configureStore({
     reducer: {
@@ -11,7 +12,8 @@ export const stores = configureStore({
         user: userSlice,
         category: categorySlice,
         item: itemSlice,
-        invoice: invoiceSlice
+        invoice: invoiceSlice,
+        setting: settingSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

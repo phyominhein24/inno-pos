@@ -31,10 +31,13 @@ export const settingService = {
         }
         return response;
     },
-    update: async (dispatch, id, payload) => {
-        const response = await postRequest(`${endpoints.setting}/${id}`, payload);
+    update: async (dispatch,  payload) => {
+        console.log("payload", payload);
+        
+        const response = await postRequest(`${endpoints.setting}`, payload);
         await httpServiceHandler(dispatch, response);
-
+        console.log("response service", response);
+        
         if (response.status === 200) {
             dispatch(update(response.data));
             dispatch(updateNotification({

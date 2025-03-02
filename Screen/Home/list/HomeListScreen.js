@@ -6,13 +6,14 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { Camera, CameraView } from "expo-camera";
 import { Audio } from "expo-av";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Ionicons } from "@expo/vector-icons";
 import CheckoutModal from "../component/CheckoutModal";
-
+import Constants from "expo-constants";
 const HomeListScreen = ({ navigation, route }) => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanning, setScanning] = useState(false);
@@ -47,7 +48,10 @@ const HomeListScreen = ({ navigation, route }) => {
   };
 
   // Calculate totals
-  const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const totalAmount = items.reduce(
+    (sum, item) => sum + item.quantity * item.price,
+    0
+  );
   const tax = totalAmount * 0.05;
   const payAmount = totalAmount + tax;
   const refundAmount = 0;
@@ -105,7 +109,9 @@ const HomeListScreen = ({ navigation, route }) => {
       <View style={styles.summaryContainer}>
         <Text>Tax (5%): {tax.toFixed(2)}</Text>
         <Text>Amount: {totalAmount.toFixed(2)}</Text>
-        <Text style={styles.highlightedText}>Pay Amount: {payAmount.toFixed(2)}</Text>
+        <Text style={styles.highlightedText}>
+          Pay Amount: {payAmount.toFixed(2)}
+        </Text>
         <Text>Refund Amount: {refundAmount.toFixed(2)}</Text>
       </View>
 
@@ -114,12 +120,19 @@ const HomeListScreen = ({ navigation, route }) => {
         <TouchableOpacity style={styles.cancelButton}>
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.confirmButton} onPress={() => setCheckoutVisible(true)}>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={() => setCheckoutVisible(true)}
+        >
           <Text style={styles.buttonText}>Confirm</Text>
         </TouchableOpacity>
       </View>
 
-      <CheckoutModal visible={checkoutVisible} onClose={() => setCheckoutVisible(false)} items={items} />
+      <CheckoutModal
+        visible={checkoutVisible}
+        onClose={() => setCheckoutVisible(false)}
+        items={items}
+      />
     </View>
   );
 };
@@ -127,8 +140,9 @@ const HomeListScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F4F4',
-    padding: 10,
+    backgroundColor: "#F4F4F4",
+    // padding: 10,
+    marginTop: Platform.OS === "android" ? Constants.statusBarHeight : 0,
   },
   header: {
     flexDirection: "row",
@@ -148,7 +162,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   searchInput: { flex: 1, padding: 5 },
-  camera: { flex: 1, height: 400 },
+  camera: { flex: 1, height: 400, marginHorizontal: 10 },
   listItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -156,12 +170,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     backgroundColor: "#fff",
   },
-  summaryContainer: { padding: 10 },
+  summaryContainer: { padding: 10, marginHorizontal: 10 },
   highlightedText: { fontWeight: "bold", fontSize: 18 },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     padding: 10,
+    
   },
   cancelButton: { backgroundColor: "red", padding: 10, borderRadius: 5 },
   confirmButton: { backgroundColor: "green", padding: 10, borderRadius: 5 },

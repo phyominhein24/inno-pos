@@ -16,4 +16,5 @@ export const endpoints = {
     category: "category",
     item: "item",
     image: `${imageURL}`,
+    setting: "setting",
 };
