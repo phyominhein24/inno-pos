@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,17 +10,75 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
+import { useDispatch, useSelector } from "react-redux";
+import { userService } from '../userService'; 
+import { userPayload } from '../userPayload';  
 
 const CustomerListScreen = ({ navigation }) => {
-  const [customers] = useState(
-    Array(6)
-      .fill({
-        name: "Aung Zaw Phyo",
-        email: "aungzawphyo1994@gmail.com",
-        phone: "09432345324",
-      })
-      .map((customer, index) => ({ ...customer, id: index.toString() }))
-  );
+  const { users, paginateParams } = useSelector((state) => state.user);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [hasMore, setHasMore] = useState(true);  // Flag to check if there is more data to load
+
+  const dispatch = useDispatch();
+
+  const deleteItem = async () => {
+    setIsLoading(true);
+    const result = await userService.destory(dispatch, selectedItem?.id);
+    if (result.status == 204) {
+        loadingData();
+        setIsLoading(false);
+    } else {
+        setIsLoading(false);
+    }
+    setModalVisible(false);
+  };
+
+  const onSearchChange = (event) => {
+    dispatch(
+        setPaginate({
+            ...paginateParams,
+            search: event,
+        })
+    );
+  };
+
+  const loadingData = useCallback(async () => {
+    try {
+      const result = await userService.index(dispatch, paginateParams);
+      if (result.status === 200) {
+        setTotal(result.data.total);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      alert("An error occurred while fetching data.");
+      setIsLoading(false);
+    }
+  }, [dispatch, paginateParams]);
+
+  useEffect(() => {
+      setIsLoading(true);
+      loadingData();
+  }, [loadingData]);
+
+  const handleEndReached = async () => {
+    if (isLoading || !hasMore) return;
+
+    const nextPage = paginateParams.page + 1;
+    dispatch(setPaginate({
+      ...paginateParams,
+      page: nextPage
+    }));
+
+    const result = await userService.index(dispatch, { ...paginateParams, page: nextPage });
+    if (result.status === 200 && result.data.users.length < paginateParams.per_page) {
+      setHasMore(false);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -48,7 +106,7 @@ const CustomerListScreen = ({ navigation }) => {
 
       {/* Customer List */}
       <FlatList
-        data={customers}
+        data={users}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
