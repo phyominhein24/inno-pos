@@ -41,7 +41,7 @@ const UserUpdateScreen = ({ navigation, route }) => {
   const submitUser = async () => {
     try {
       const response = await userService.update(dispatch, data?.id, payload);
-      console.log("Response:", response); // Debugging
+      console.log("Response:", response);
   
       if (response && response.status === 200) {
         navigation.navigate('UserList');
@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     marginBottom: 20,
+    marginHorizontal: 10
   },
   profileImage: {
     width: 80,
